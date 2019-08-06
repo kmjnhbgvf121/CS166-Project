@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>View Car</title>
+</head>
+<body>
+<p>View Cars</p>
+<table class="table table-striped">
+    <thead>
+    <tr>
+        <th>vin</th>
+        <th>make</th>
+        <th>model</th>
+        <th>year</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for car in cars  %}
+    <tr>
+        <td>{{ car.vin }}</td>
+        <td>{{ car.make }}</td>
+        <td>{{ car.model }}</td>
+        <td>{{ car.year }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+</body>
+</html>
