@@ -102,3 +102,43 @@ def add_new_car():
             return redirect(url_for('index'))
 
     return render_template('new_car.html')
+
+
+@app.route('/init_service',methods=['GET','POST'])
+def init_service():
+    from models import customer,owns,service_request,car
+    global cid
+    if request.method=='POST' and request.form.get('car_vin') is None:
+        c=customer.query.filter_by(lname=request.form['lname']).first()
+        if c is None:
+            flash('Invalid Name!')
+            return render_template('new_customer.html')
+        cid=c.id
+        cars=owns.query.filter_by(customer_id=cid).all()
+
+        car_list=[]
+        for vech in cars:
+            a=car.query.filter_by(vin=vech.car_vin).all()
+            car_list+=a
+
+        return render_template('init_service.html',cars=car_list)
+
+    elif request.method=='POST' and request.form.get('car_vin'):
+        rid=db.session.query(db.func.max(service_request.rid)).scalar()+1
+        car_vin=request.form['car_vin']
+        date=request.form['date']
+        odometer=request.form['odometer']
+        complain=request.form['complain']
+        new_service=service_request(rid=rid,customer_id=cid,car_vin=car_vin,
+                                    date=date,odometer=odometer,complain=complain)
+        db.session.add(new_service)
+        db.session.commit()
+        flash('Initiate service request successful!')
+
+        return redirect(url_for('index'))
+
+    return render_template('init_service.html')
+
+@app.route('/close_service',methods=['GET','POST'])
+def close_service():
+

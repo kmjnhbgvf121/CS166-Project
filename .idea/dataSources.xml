@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="DataSourceManagerImpl" format="xml" multifile-model="true">
-    <data-source source="LOCAL" name="vagrant_DB@localhost" uuid="8eacc7c7-b9ba-4daa-bbdd-614a0ef8c4b2">
+    <data-source source="LOCAL" name="vagrant_DB@localhost" uuid="754bf5b5-af15-4292-aa51-002a0b7836e1">
       <driver-ref>postgresql</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>org.postgresql.Driver</jdbc-driver>
