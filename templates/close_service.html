@@ -1,10 +1,19 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends "base.html" %}
 
-</body>
-</html>
+{% block title %}Lin's Body Shop - Close Service Request{% endblock %}
+
+{% block page_content %}
+    <div class="page-header">
+    <h1>Close Service Request</h1>
+    </div>
+    <form class="form-inline" action="{{ request.path }}" method="post">
+    <div class="form-group">
+        <input type="number" class="form-control" name="rid" placeholder="Service Request Number" required>
+        <input type="number" class="form-control" name="mid" placeholder="Employee ID" required>
+        <input type="text" class="form-control" name="comment" placeholder="Comment" required>
+        <input type="number" class="form-control" min="0" name="bill" placeholder="Bill" required>
+        <input type="date" class="form-control" name="cdate" placeholder="Close Date" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+{% endblock %}

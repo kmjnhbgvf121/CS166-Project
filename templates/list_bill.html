@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}Lin's BOdy Shop - List Bill{% endblock %}
+
+{% block page_content %}
+<div class="page-header">
+    <h2>List date, comment, and bill for all closed requests with bill lower than 100</h2>
+</div>
+    <div class="table">
+    <table class="table">
+        <thead>
+        <tr>
+                <th>date</th>
+                <th>comment</th>
+                <th>bill</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for r in result.items %}
+        <tr>
+            <td>{{ r.date }}</td>
+            <td>{{ r.comment }}</td>
+            <td>{{ r.bill }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+
+
+    {% from "bootstrap/pagination.html" import render_pagination %}
+    {{ render_pagination(result) }}
+
+{% endblock %}
