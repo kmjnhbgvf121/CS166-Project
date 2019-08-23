@@ -6,15 +6,15 @@
 <div class="page-header">
     <h1>Initiate Service Request</h1>
 </div>
-<form class="form-inline" action="{{ request.path }}" method="post">
+<form class="form-inline" action="{{ request.path }}" method="POST">
     <div class="form-group">
         <label class="sr-only" for="lname">Customer Last Name</label>
         <input type="text" class="form-control" name="lname" required placeholder="Last Name">
     </div>
     <button type="submit" class="btn btn-primary">Submit</button>
 </form>
-
-    <form action="{{ request.path }}" method="post">
+    {% if cars %}
+    <form action="{{ request.path }}" method="POST">
         <div class="form-group has-feedback">
             <table class="table">
                 <thead>
@@ -36,14 +36,22 @@
                         <td>{{ car.year }}</td>
                     </tr>
                 {% endfor %}
+                    <tr>
+                        <td><input type="radio" name="car_vin" value="good" required> </td>
+                        <td><input type="text" class="form-control" name="vin"> </td>
+                        <td><input type="text" class="form-control" name="car_make"> </td>
+                        <td><input type="text" class="form-control" name="car_model"> </td>
+                        <td><input type="number" class="form-control" min="1970" max="2020" name="car_year"> </td>
+                    </tr>
                 </tbody>
             </table>
         </div>
-    <div class="form-group form-inline">
-        <input type="date" class="form-control" name="date" placeholder="date" required>
+    <div class="form-inline">
         <input type="number" min="0" class="form-control" name="odometer" placeholder="odometer" required>
         <input type="text" size="20" class="form-control" name="complain" placeholder="complain" required>
+        <input type="date" class="form-control" name="date" placeholder="date" required>
         <button type="submit" class="btn btn-primary">Submit</button>
     </div>
     </form>
+    {% endif %}
 {%  endblock %}

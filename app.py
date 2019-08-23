@@ -115,18 +115,15 @@ def init_service():
             flash('Invalid Name!')
             return render_template('new_customer.html')
         cid = c.id
-        cars = owns.query.filter_by(customer_id=cid).all()
+        cars = owns.query.filter_by(customer_id=cid).subquery()
 
-        car_list = []
-        for vech in cars:
-            a = car.query.filter_by(vin=vech.car_vin).all()
-            car_list += a
+        car_list = car.query.join((cars, cars.c.car_vin == car.vin)).all()
 
         return render_template('init_service.html', cars=car_list)
 
-    elif request.method == 'POST' and request.form.get('car_vin'):
+    elif request.method == 'POST' and request.form.get('car_vin') != 'good':
         rid = db.session.query(db.func.max(service_request.rid)).scalar() + 1
-        car_vin = request.form['car_vin']
+        car_vin = request.form['vin']
         date = request.form['date']
         odometer = request.form['odometer']
         complain = request.form['complain']
@@ -138,24 +135,59 @@ def init_service():
 
         return redirect(url_for('index'))
 
+    elif request.method == 'POST' and request.form.get('car_vin') == 'good':
+        car_vin = request.form['vin']
+        car_make = request.form['car_make']
+        car_model = request.form['car_model']
+        car_year = request.form['car_year']
+
+        if car.query.filter_by(vin=car_vin).all():
+            flash('VIN exists!')
+            return render_template('init_service.html')
+
+        new_car = car(vin=car_vin, make=car_make, model=car_model, year=car_year)
+        oid = db.session.query(db.func.max(owns.ownership_id)).scalar() + 1
+        new_own_car = owns(ownership_id=oid, customer_id=cid, car_vin=car_vin)
+
+        rid = db.session.query(db.func.max(service_request.rid)).scalar() + 1
+        date = request.form['date']
+        odometer = request.form['odometer']
+        complain = request.form['complain']
+        new_service = service_request(rid=rid, customer_id=cid, car_vin=car_vin,
+                                      date=date, odometer=odometer, complain=complain)
+
+        db.session.add(new_car)
+        db.session.commit()
+        db.session.add(new_own_car)
+        db.session.commit()
+        db.session.add(new_service)
+        db.session.commit()
+
+        flash('Add new car and initiate service request successful!')
+
+        return redirect(url_for('index'))
+
     return render_template('init_service.html')
 
 
 @app.route('/close_service', methods=['GET', 'POST'])
 def close_service():
-    from models import service_request, mechanic,closed_request
+    from models import service_request, mechanic, closed_request
     from datetime import date
     if request.method == 'POST':
-        if service_request.query.filter_by(rid=request.form['rid']).first() \
+        if closed_request.query.filter_by(rid=request.form['rid']).first() is not None:
+            flash('Already closed!')
+        elif service_request.query.filter_by(rid=request.form['rid']).first() \
                 and mechanic.query.filter_by(id=request.form['mid']).first():
             service_date = service_request.query.filter_by(rid=request.form['rid']).first().date
-            cdate=request.form['cdate']
-            cdate=date(int(cdate[:4]),int(cdate[5:7]),int(cdate[8:]))
+            cdate = request.form['cdate']
+            cdate = date(int(cdate[:4]), int(cdate[5:7]), int(cdate[8:]))
 
-            if cdate>service_date:
-                wid=db.session.query(db.func.max(closed_request.wid)).scalar()+1
-                new_close_request=closed_request(wid=wid,rid=request.form['rid'],mid=request.form['mid'],
-                                                 date=cdate,comment=request.form['comment'],bill=request.form['bill'])
+            if cdate > service_date:
+                wid = db.session.query(db.func.max(closed_request.wid)).scalar() + 1
+                new_close_request = closed_request(wid=wid, rid=request.form['rid'], mid=request.form['mid'],
+                                                   date=cdate, comment=request.form['comment'],
+                                                   bill=request.form['bill'])
                 db.session.add(new_close_request)
                 db.session.commit()
                 flash('Close service request successful!')
@@ -172,16 +204,82 @@ def close_service():
     return render_template('close_service.html')
 
 
-@app.route('/list_bill/<int:page>',methods=['GET'])
+@app.route('/list_bill/<int:page>', methods=['GET'])
 def list_bill(page=None):
     from models import closed_request
     if not page:
-        page=1
+        page = 1
 
-    bills=db.session.query(closed_request).filter(closed_request.bill>100)
-    pagination=bills.paginate(page,50)
+    bills = db.session.query(closed_request).filter(closed_request.bill < 100)
+    pagination = bills.paginate(page, 50)
 
-    category=[(1,'date'),(2,'comment'),(3,'bill')]
-    return render_template('list_bill.html',result=pagination)
+    return render_template('list_bill.html', result=pagination)
 
 
+@app.route('/list_customers/<int:page>')
+def list_customers(page=None):
+    from models import owns, customer
+    if not page:
+        page = 1
+
+    customers = db.session.query(owns.customer_id) \
+        .group_by(owns.customer_id).having(db.func.count(owns.customer_id) > 20).subquery()
+    cname = db.session.query(customer).join((customers, customer.id == customers.c.customer_id))
+    pagination = cname.paginate(page, 50)
+
+    return render_template('list_customers.html', result=pagination)
+
+
+@app.route('/list_cars/<int:page>')
+def list_cars(page=None):
+    from models import service_request, car
+    if not page:
+        page = 1
+
+    lessCar = service_request.query.filter(service_request.odometer < 50000).subquery()
+    oldCar = car.query.join((lessCar, car.vin == lessCar.c.car_vin)).filter(car.year < 1995).distinct()
+
+    pagination = oldCar.paginate(page, 50)
+
+    return render_template('list_cars.html', result=pagination)
+
+
+@app.route('/list_services/<int:page>', methods=['GET', 'POST'])
+def list_services(page=None):
+    global k
+    from models import service_request, car
+    if not page:
+        page = 1
+
+    if request.method == 'POST':
+        k = request.form['k']
+        page = 1
+    elif request.method == 'GET' and page == 1:
+        k = 100
+
+    service = db.session.query(service_request.car_vin,
+                               db.func.count(service_request.car_vin).label('service_count')).group_by(
+        service_request.car_vin).order_by(db.func.count(service_request.car_vin).desc()).limit(k).subquery()
+
+    pagination = db.session.query(car.make, car.model, service.c.service_count). \
+        join((service, service.c.car_vin == car.vin)).paginate(page, 50)
+
+    return render_template('list_services.html', result=pagination)
+
+
+@app.route('/list_total_bill/<int:page>')
+def list_total_bill(page=None):
+    from models import customer, closed_request, service_request
+    if not page:
+        page = 1
+
+    tb = db.session.query(service_request.customer_id, db.func.sum(closed_request.bill).label('tbill')). \
+        join((closed_request, closed_request.rid == service_request.rid)). \
+        group_by(service_request.customer_id).order_by(db.func.sum(closed_request.bill).desc()).subquery()
+
+    name_bill = db.session.query(customer.fname, customer.lname, tb.c.tbill). \
+        join((tb, tb.c.customer_id == customer.id)).order_by(tb.c.tbill.desc())
+
+    pagination = name_bill.paginate(page, 50)
+
+    return render_template('list_total_bill.html', result=pagination)

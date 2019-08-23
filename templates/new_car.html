@@ -22,10 +22,6 @@
         <div class="form-group">
             <label class="sr-only" for="year">Year</label>
             <input type="number" min="1970" max="2020" class="form-control" name="year" placeholder="Year">
-            <script>
-                document.querySelector("input[type=number]")
-                    .oninput=e=>console.log(new Date(e.target.valueAsNumber,0,1))
-            </script>
         </div>
   <button type="submit" class="btn btn-primary">Submit</button>
 </form>

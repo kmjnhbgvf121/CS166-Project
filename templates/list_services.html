@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Lin's BOdy Shop - List Services{% endblock %}
+
+{% block page_content %}
+<div class="page-header">
+    <h2>List the make, model and number of service requests for the first k cars with the highest number of service orders.</h2>
+</div>
+    <form class="form-inline" action="{{ request.path }}" method="post">
+        <div class="form-group">
+            <input type="number" class="form-group" name="k" required min="1" placeholder="k">
+        </div>
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+
+    <div class="table">
+    <table class="table">
+        <thead>
+        <tr>
+                <th>make</th>
+                <th>model</th>
+                <th>number of service requests</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for r in result.items %}
+        <tr>
+            <td>{{ r.make}}</td>
+            <td>{{ r.model}}</td>
+            <td>{{ r.service_count}}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+
+
+    {% from "bootstrap/pagination.html" import render_pagination %}
+    {{ render_pagination(result) }}
+
+{% endblock %}

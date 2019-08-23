@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}Lin's BOdy Shop - List Bill{% endblock %}
+
+{% block page_content %}
+<div class="page-header">
+    <h2>List the first name, last name and total bill of customers in descending order of their total bill for all cars brought to the mechanic.</h2>
+</div>
+    <div class="table">
+    <table class="table">
+        <thead>
+        <tr>
+                <th>First name</th>
+                <th>Last name</th>
+                <th>Total bill</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for r in result.items %}
+        <tr>
+            <td>{{ r.fname}}</td>
+            <td>{{ r.lname}}</td>
+            <td>{{ r.tbill}}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+
+
+    {% from "bootstrap/pagination.html" import render_pagination %}
+    {{ render_pagination(result) }}
+
+{% endblock %}
