@@ -83,7 +83,7 @@ def add_new_mechanic():
 
 @app.route('/new_car', methods=['GET', 'POST'])
 def add_new_car():
-    from models import car
+    from models import car,owns,customer
     if request.method == 'POST':
         if not request.form['vin'] or not request.form['make'] \
                 or not request.form['model'] or not request.form['year']:
@@ -94,10 +94,18 @@ def add_new_car():
             return redirect(url_for('add_new_car'))
         elif len(str(request.form['vin'])) != 16:
             flash('Invalid VIN!')
+        elif int(request.form['cid'])>db.session.query(db.func.max(customer.id)).scalar():
+            flash('Invalid Customer ID!')
         else:
             new_car = car(vin=request.form['vin'], make=request.form['make'],
                           model=request.form['model'], year=request.form['year'])
+
             db.session.add(new_car)
+            db.session.commit()
+            oid = db.session.query(db.func.max(owns.ownership_id)).scalar() + 1
+            new_owns=owns(ownership_id=oid,customer_id=request.form['cid'],
+                          car_vin=request.form['vin'])
+            db.session.add(new_owns)
             db.session.commit()
             flash('New car added successful!')
             return redirect(url_for('index'))
@@ -123,7 +131,7 @@ def init_service():
 
     elif request.method == 'POST' and request.form.get('car_vin') != 'good':
         rid = db.session.query(db.func.max(service_request.rid)).scalar() + 1
-        car_vin = request.form['vin']
+        car_vin = request.form['car_vin']
         date = request.form['date']
         odometer = request.form['odometer']
         complain = request.form['complain']
@@ -222,9 +230,9 @@ def list_customers(page=None):
     if not page:
         page = 1
 
-    customers = db.session.query(owns.customer_id) \
+    customers = db.session.query(owns.customer_id,db.func.count(owns.customer_id).label('car')) \
         .group_by(owns.customer_id).having(db.func.count(owns.customer_id) > 20).subquery()
-    cname = db.session.query(customer).join((customers, customer.id == customers.c.customer_id))
+    cname = db.session.query(customer.lname,customer.fname,customers.c.car).join((customers, customer.id == customers.c.customer_id))
     pagination = cname.paginate(page, 50)
 
     return render_template('list_customers.html', result=pagination)
